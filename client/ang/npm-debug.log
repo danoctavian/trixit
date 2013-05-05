@@ -1,0 +1,55 @@
+info it worked if it ends with ok
+verbose cli [ 'node', '/usr/bin/npm', 'install', 'prelude-ls' ]
+info using npm@1.1.4
+info using node@v0.6.12
+verbose config file /home/dan/.npmrc
+verbose config file /usr/etc/npmrc
+verbose config file /usr/share/npm/npmrc
+verbose caching /home/dan/repos/trixit/client/ang/node_modules/underscore/package.json
+verbose cache add [ 'prelude-ls', null ]
+silly cache add: name, spec, args [ undefined, 'prelude-ls', [ 'prelude-ls', null ] ]
+verbose parsed url { pathname: 'prelude-ls',
+verbose parsed url   path: 'prelude-ls',
+verbose parsed url   href: 'prelude-ls' }
+verbose addNamed [ 'prelude-ls', '' ]
+verbose addNamed [ null, '' ]
+silly name, range, hasData [ 'prelude-ls', '', false ]
+verbose raw, before any munging prelude-ls
+verbose url resolving [ 'https://registry.npmjs.org/', './prelude-ls' ]
+verbose url resolved https://registry.npmjs.org/prelude-ls
+http GET https://registry.npmjs.org/prelude-ls
+http 200 https://registry.npmjs.org/prelude-ls
+silly get cb [ 200,
+silly get cb   { vary: 'Accept',
+silly get cb     server: 'CouchDB/1.3.0 (Erlang OTP/R15B03)',
+silly get cb     etag: '"A5JDAQ2YTMUN1LYJLY1ZRZPE6"',
+silly get cb     date: 'Fri, 03 May 2013 05:06:33 GMT',
+silly get cb     'content-type': 'application/json',
+silly get cb     'content-length': '13618' } ]
+verbose mkdir (expected) error ENOENT, no such file or directory '/home/dan/.npm/prelude-ls'
+verbose mkdir done: /home/dan/.npm/prelude-ls 755
+silly name, range, hasData 2 [ 'prelude-ls', '', true ]
+silly versions [ 'prelude-ls', [] ]
+ERR! Error: No compatible version found: prelude-ls
+ERR! No valid targets found.
+ERR! Perhaps not compatible with your version of node?
+ERR!     at installTargetsError (/usr/share/npm/lib/cache.js:488:10)
+ERR!     at next_ (/usr/share/npm/lib/cache.js:438:17)
+ERR!     at next (/usr/share/npm/lib/cache.js:415:44)
+ERR!     at /usr/share/npm/lib/cache.js:408:5
+ERR!     at saved (/usr/share/npm/lib/utils/npm-registry-client/get.js:147:7)
+ERR!     at Object.oncomplete (/usr/lib/nodejs/graceful-fs.js:230:7)
+ERR! You may report this log at:
+ERR!     <http://bugs.debian.org/npm>
+ERR! or use
+ERR!     reportbug --attach /home/dan/repos/trixit/client/ang/npm-debug.log npm
+ERR! 
+ERR! System Linux 3.5.0-23-generic
+ERR! command "node" "/usr/bin/npm" "install" "prelude-ls"
+ERR! cwd /home/dan/repos/trixit/client/ang
+ERR! node -v v0.6.12
+ERR! npm -v 1.1.4
+ERR! message No compatible version found: prelude-ls
+ERR! message No valid targets found.
+ERR! message Perhaps not compatible with your version of node?
+verbose exit [ 1, true ]
