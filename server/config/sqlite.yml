@@ -1,0 +1,20 @@
+Default: &defaults
+  database: trixitServer.sqlite3
+  poolsize: 10
+
+Development:
+  <<: *defaults
+
+Testing:
+  database: trixitServer_test.sqlite3
+  <<: *defaults
+
+Staging:
+  database: trixitServer_staging.sqlite3
+  poolsize: 100
+  <<: *defaults
+
+Production:
+  database: trixitServer_production.sqlite3
+  poolsize: 100
+  <<: *defaults

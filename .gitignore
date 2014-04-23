@@ -1,0 +1,7 @@
+cabal.sandbox.config
+.cabal-sandbox
+node_modules
+build
+cache
+dist
+*.sqlite3
