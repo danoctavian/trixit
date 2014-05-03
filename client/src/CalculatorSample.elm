@@ -86,8 +86,8 @@ buttons =
                  , rightOp Equals "=" ]
     ]
 
-button : Color -> Color -> Int -> Int -> Command -> String -> Element
-button background foreground w h command name =
+button : Color -> Color -> Int -> Int -> Handle a -> a -> String -> Element
+button background foreground w h handle value name =
     let n = min w h
         btn alpha =
             layers [ color black . container w h bottomRight .
@@ -95,7 +95,7 @@ button background foreground w h command name =
                      container n n middle <| txt 0.3 foreground name
                    , color (rgba 0 0 0 alpha) (spacer w h)
                    ]
-    in  Input.customButton commands.handle command (btn 0) (btn 0.05) (btn 0.1)
+    in  Input.customButton handle value (btn 0) (btn 0.05) (btn 0.1)
 
 lightButton : Int -> Int -> Command -> String -> Element
 lightButton = button lightGrey black
