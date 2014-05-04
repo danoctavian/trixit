@@ -67,10 +67,11 @@ votes = (P.concatMap tcVotes)
 
 owns player cardID state = P.elem cardID $ handCards $ findPlayer player (players state)
 -- assumes correct input
-putDown player cardID state = state {players = update ((player ==) . playerID)
-                                                      (\p -> p {handCards = handCards p \\ [cardID]})
-                                                      (players state),
-                                     tableCards =  (TableCard cardID player [] False) : tableCards state}
+putDown player cardID state
+  = state {players = update ((player ==) . playerID)
+              (\p -> p {handCards = handCards p \\ [cardID]})
+              (players state),
+          tableCards =  (TableCard cardID player [] False) : tableCards state}
 
 progressToGuess state
   = if' ((P.length $ tableCards state) == (P.length $ players state))
