@@ -1,5 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 
+module Trixit where
+
 import Prelude as P
 import Data.List as DL
 import Data.Maybe

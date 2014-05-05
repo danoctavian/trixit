@@ -30,6 +30,9 @@ import Yesod.Core.Types (loggerSet, Logger (Logger))
 import Handler.Home
 import Handler.Echo
 
+import Control.Concurrent.STM.TChan
+import Control.Monad.STM
+
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the
 -- comments there for more details.
@@ -71,6 +74,7 @@ makeFoundation conf = do
     loggerSet' <- newStdoutLoggerSet defaultBufSize
     (getter, updater) <- clockDateCacher
 
+    chatCh <- newTChanIO
     -- If the Yesod logger (as opposed to the request logger middleware) is
     -- used less than once a second on average, you may prefer to omit this
     -- thread and use "(updater >> getter)" in place of "getter" below.  That
@@ -83,7 +87,7 @@ makeFoundation conf = do
     _ <- forkIO updateLoop
 
     let logger = Yesod.Core.Types.Logger loggerSet' getter
-        foundation = App conf s p manager dbconf logger
+        foundation = App conf s p manager dbconf logger chatCh
 
     -- Perform database migration using our application's logging settings.
     runLoggingT

@@ -21,6 +21,7 @@ library
                      Settings.Development
                      Handler.Home
                      Handler.Echo
+    other-modules: Trixit
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT
@@ -68,7 +69,16 @@ library
                  , monad-logger                  >= 0.3        && < 0.4
                  , fast-logger                   >= 2.1.4      && < 2.2
                  , wai-logger                    >= 2.1        && < 2.2
-                 , operational
+                 , split                        
+                 -- >= 0.2.2
+                 , mtl                          
+                 -- >= 2.2
+                 , yesod-websockets             
+                 -- >= 0.1.0.0
+                 , stm                         
+                  -- >= 2.4.3
+                 , classy-prelude-conduit        
+                 -- >= 0.9.1
 
 executable         trixitServer
     if flag(library-only)
