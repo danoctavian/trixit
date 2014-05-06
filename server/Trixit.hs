@@ -7,6 +7,7 @@ import Data.List as DL
 import Data.Maybe
 import Data.List.Split as DLS
 import "mtl" Control.Monad.Error
+import Utils
 
 type CardID = String
 type PlayerID = String
@@ -59,7 +60,7 @@ applyMove move state
     (Guess, (player, Vote cardID))
       -> if' ((P.elem cardID $ P.map tcID $ tableCards state)
               && (not $ P.elem player $ votes $ tableCards state) && player /= (proposer state))
-         (Right $ progressToEndRound $ state {tableCards =
+         (Right $ (\g -> if' (allVoted g) (progressToEndRound g) g) $ state {tableCards =
             update ((cardID ==) . tcID) (\ tc -> tc {tcVotes = player : tcVotes tc}) (tableCards state)})
          (Left "wrong vote")
     (Idle, (gameMaster, StartRound)) -> Right $ newRound state    
@@ -80,19 +81,22 @@ progressToGuess state
     (state {stage = Guess, tableCards = (P.map (\c -> c {tcFaceUp = True}) $ tableCards state)})
     state 
 
+
+allVoted state = (P.length $ votes $ tableCards state) == (P.length $ players state) - 1
+
 progressToEndRound state
-  = if' ((P.length $ votes $ tableCards state) == (P.length $ players state) - 1) 
-    (state
+  =  state
     {players = updateScores (score (tableCards state) (proposer state)) $ players state,
     stage = Idle
-    })
-    state
+    } 
+
+nextProposer state =  after (proposer state) (P.map playerID $ players state)
 
 newRound state
   = dealCards 1 $ state {
     tableCards = [],
     cardDeck = cardDeck state ++ (P.map tcID $ tableCards state),
-    proposer = after (proposer state) (P.map playerID $ players state),
+    proposer = nextProposer state,
     stage = ProposeWord
   }
 
@@ -134,15 +138,35 @@ update updateable change = P.map (\x -> if' (updateable x) (change x) x)
 
 -- assumes player exists
 findPlayer  :: PlayerID -> [Player] -> Player
-findPlayer pid ps = (P.filter ((pid == ) . playerID) ps) !! 0
+findPlayer pid ps = head $ P.filter ((pid == ) . playerID) ps
 
 after :: (Eq a) => a -> [a] -> a
 after x xs = P.dropWhile (x /=) (xs ++ xs) !! 1
 
-if' c a b = if c then a else b
-
-
 others s = filter ((proposer s /= ) . playerID) $ players s
+
+waitingFor :: GameState -> [PlayerID]
+waitingFor gameState = undefined
+
+
+{-
+timeout handling:
+Propose word -> skip to next person
+Match -> select first card in the hand
+vote -> ignore players who didn't vote 
+-}
+
+{- a default decision for the players in case they time out
+cannot fail, timeouts are always considered correct with respect to the state
+-}
+playerTimeouts :: [PlayerID] -> GameState -> GameState
+playerTimeouts latePlayers game
+  = case (stage game) of
+      ProposeWord -> game {proposer = nextProposer game}
+      (Match w) -> foldl (\game player -> fromRight $ applyMove (player,
+            MatchWord (head $ handCards $ findPlayer player $ players game)) game) game latePlayers
+      Guess -> progressToEndRound game 
+      Idle -> undefined -- nope...
 
 -- so it kinda works knowing this :)
 mTest1 = let bs =initGame (P.map show $ P.take 5 [1..]) (P.map show $ P.take 40 [1..]) in
@@ -155,3 +179,6 @@ mTest1 = let bs =initGame (P.map show $ P.take 5 [1..]) (P.map show $ P.take 40 
             (\p -> applyMove (playerID p, Vote (tcID $ tableCards s !! 0))) $ others s))
           , (applyMove (gameMaster, StartRound))
           ]
+
+mTestScore1 = score [TableCard "1" "P1" ["P2"] True, TableCard "2" "P2" ["P3"] True,
+                    TableCard "3" "P3" ["P4"] True, TableCard "4" "P4" [] True] "P1"
