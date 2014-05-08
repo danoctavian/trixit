@@ -5,7 +5,6 @@ import Import
 import Yesod.WebSockets
 import Control.Concurrent.STM.TChan
 import Control.Monad.STM
-import ClassyPrelude.Conduit (($$), forever)
 import Data.Conduit.List as CL
 
 -- This is a handler function for the GET request method on the HomeR

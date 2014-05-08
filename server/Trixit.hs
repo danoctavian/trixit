@@ -34,6 +34,7 @@ data GameState = GameState  {
 
 -- StartRound just progresses the game from Idle to the next round
 data PlayerMove = Proposal Word CardID | Vote CardID | MatchWord CardID | StartRound
+  deriving (Show, Eq)
 
 gameMaster :: PlayerID
 gameMaster = "0"
@@ -146,7 +147,14 @@ after x xs = P.dropWhile (x /=) (xs ++ xs) !! 1
 others s = filter ((proposer s /= ) . playerID) $ players s
 
 waitingFor :: GameState -> [PlayerID]
-waitingFor gameState = undefined
+waitingFor game =
+  case (stage game) of
+    ProposeWord -> [proposer game]
+    Match w -> playerIDs \\ (P.map tcOwner $ tableCards game)
+    Guess -> playerIDs \\ (proposer game : (votes $ tableCards game))
+    Idle -> []
+  where
+    playerIDs = P.map playerID $ players game
 
 
 {-
@@ -166,7 +174,7 @@ playerTimeouts latePlayers game
       (Match w) -> foldl (\game player -> fromRight $ applyMove (player,
             MatchWord (head $ handCards $ findPlayer player $ players game)) game) game latePlayers
       Guess -> progressToEndRound game 
-      Idle -> undefined -- nope...
+      Idle -> error "there is no action on the player side for the idle stage" -- nope...
 
 -- so it kinda works knowing this :)
 mTest1 = let bs =initGame (P.map show $ P.take 5 [1..]) (P.map show $ P.take 40 [1..]) in
@@ -177,8 +185,20 @@ mTest1 = let bs =initGame (P.map show $ P.take 5 [1..]) (P.map show $ P.take 40 
             (\p -> applyMove (playerID p, MatchWord (handCards p !! 0))) $ others s))
           , (\s -> foldl (>>=) (return s) (P.map
             (\p -> applyMove (playerID p, Vote (tcID $ tableCards s !! 0))) $ others s))
-          , (applyMove (gameMaster, StartRound))
+          , gmSaysNext
           ]
 
+mTest2 = let bs =initGame (P.map show $ P.take 5 [1..]) (P.map show $ P.take 40 [1..]) in
+          foldl (>>=) (return $ bs)
+          
+          [\s -> applyMove (proposer s, Proposal "shit" ( head $ handCards $ findPlayer (proposer s) $ players $ s)) s
+          , othersTimeout
+          , othersTimeout
+          , gmSaysNext
+          ]
+
+
+othersTimeout s = return $ playerTimeouts ( (\\ [proposer s]) $ P.map playerID $ players s) s
+gmSaysNext = applyMove (gameMaster, StartRound)
 mTestScore1 = score [TableCard "1" "P1" ["P2"] True, TableCard "2" "P2" ["P3"] True,
                     TableCard "3" "P3" ["P4"] True, TableCard "4" "P4" [] True] "P1"
