@@ -24,6 +24,9 @@ import Control.Concurrent.STM.TChan
 import Control.Monad.STM
 import Data.ByteString
 
+import TrixitGameLoop
+
+
 -- | The site argument for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
 -- starts running, such as database connections. Every handler will have
@@ -35,7 +38,8 @@ data App = App
     , httpManager :: Manager
     , persistConfig :: Settings.PersistConf
     , appLogger :: Logger
-    , chatChan :: TChan ByteString
+    , runningGames :: RunningGames
+    , openConnections :: OpenConnections
     }
 
 instance HasHttpManager App where

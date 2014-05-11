@@ -1,4 +1,5 @@
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Trixit where
 
@@ -8,6 +9,9 @@ import Data.Maybe
 import Data.List.Split as DLS
 import "mtl" Control.Monad.Error
 import Utils
+import GHC.Generics
+import Data.Data
+import Data.Typeable
 
 type CardID = String
 type PlayerID = String
@@ -15,7 +19,7 @@ type Word = String
 data Player = Player {playerID :: PlayerID, playerScore :: Int, handCards :: [CardID]}
   deriving (Show, Eq)
 data GameStage =  ProposeWord | Match Word | Guess | Idle
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic, Data, Typeable)
 
 type PlayerVote = PlayerID
 -- cardID, owner , votes and faceUp
@@ -32,9 +36,34 @@ data GameState = GameState  {
                  | EndGame {gameWinners :: [Player]}
                  deriving (Show, Eq)
 
+data TableCardView = TableCardView {tcvCardID :: CardID, tcvVotes :: [PlayerVote], tcvOwner :: Maybe PlayerID}
+  deriving (Show, Eq, Generic, Data, Typeable)
+data PlayerView = PlayerView {pvID :: PlayerID, pvScore :: Int}
+  deriving (Show, Eq, Generic, Data, Typeable)
+data GameView = GameView {
+                        gvTableCards :: [TableCardView]
+                      , gvPlayerHand :: [CardID]
+                      , gvPlayers :: [PlayerView]
+                      , gvStage :: GameStage
+                      , gvProposer :: PlayerID
+                    }
+                deriving (Show, Eq, Generic, Data, Typeable)
+
+faceDownID = "0"
+playerView :: GameState -> PlayerID -> GameView
+playerView gs pid
+  = GameView {
+        gvTableCards = P.map (\tc -> TableCardView (if' (tcFaceUp tc) (tcID tc) faceDownID) (tcVotes tc)
+                                     (if' (stage gs == Idle) (Just $ tcOwner tc) Nothing) ) $ tableCards gs
+      , gvPlayerHand = handCards $ findPlayer pid (players gs)
+      , gvPlayers = P.map (\p -> PlayerView (playerID p) (playerScore p)) (players gs)
+      , gvStage = stage gs
+      , gvProposer = proposer gs
+    }
+
 -- StartRound just progresses the game from Idle to the next round
 data PlayerMove = Proposal Word CardID | Vote CardID | MatchWord CardID | StartRound
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic, Data, Typeable)
 
 gameMaster :: PlayerID
 gameMaster = "0"
@@ -138,7 +167,7 @@ update :: (a -> Bool) -> (a -> a) -> [a] -> [a]
 update updateable change = P.map (\x -> if' (updateable x) (change x) x) 
 
 -- assumes player exists
-findPlayer  :: PlayerID -> [Player] -> Player
+findPlayer :: PlayerID -> [Player] -> Player
 findPlayer pid ps = head $ P.filter ((pid == ) . playerID) ps
 
 after :: (Eq a) => a -> [a] -> a
@@ -152,9 +181,12 @@ waitingFor game =
     ProposeWord -> [proposer game]
     Match w -> playerIDs \\ (P.map tcOwner $ tableCards game)
     Guess -> playerIDs \\ (proposer game : (votes $ tableCards game))
-    Idle -> []
+    Idle -> [gameMaster]
   where
     playerIDs = P.map playerID $ players game
+
+
+
 
 
 {-

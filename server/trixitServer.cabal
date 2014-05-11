@@ -21,6 +21,7 @@ library
                      Settings.Development
                      Handler.Home
                      Handler.Echo
+                     Handler.TrixitHandler
     other-modules: Trixit
                    TrixitGameLoop
                    Utils
@@ -80,6 +81,9 @@ library
                  , random-shuffle                >= 0.0.4
                  , hashmap                       >= 1.3.0.1
                  , transformers                  >= 0.2.2.0
+                 , hslogger                     >= 1.2.4      && < 1.3
+                 , unordered-containers         >= 0.2.4.0    && < 0.3
+                 , ghc-prim                     
 
 executable         trixitServer
     if flag(library-only)

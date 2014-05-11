@@ -29,6 +29,7 @@ import Yesod.Core.Types (loggerSet, Logger (Logger))
 -- Don't forget to add new modules to your cabal file!
 import Handler.Home
 import Handler.Echo
+import Handler.TrixitHandler
 
 import Control.Concurrent.STM.TChan
 import Control.Monad.STM
@@ -74,7 +75,8 @@ makeFoundation conf = do
     loggerSet' <- newStdoutLoggerSet defaultBufSize
     (getter, updater) <- clockDateCacher
 
-    chatCh <- newTChanIO
+    games <- initializeRunningGames
+    openConns <- initializeOpenConnections
     -- If the Yesod logger (as opposed to the request logger middleware) is
     -- used less than once a second on average, you may prefer to omit this
     -- thread and use "(updater >> getter)" in place of "getter" below.  That
@@ -87,7 +89,7 @@ makeFoundation conf = do
     _ <- forkIO updateLoop
 
     let logger = Yesod.Core.Types.Logger loggerSet' getter
-        foundation = App conf s p manager dbconf logger chatCh
+        foundation = App conf s p manager dbconf logger games openConns
 
     -- Perform database migration using our application's logging settings.
     runLoggingT

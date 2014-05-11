@@ -6,6 +6,7 @@ import Yesod.WebSockets
 import Control.Concurrent.STM.TChan
 import Control.Monad.STM
 import Data.Conduit.List as CL
+import TrixitGameLoop
 
 -- This is a handler function for the GET request method on the HomeR
 -- resource pattern. All of your resource patterns are defined in
@@ -55,7 +56,7 @@ chatApp = do
     name <- receiveData
     sendTextData $ ("Welcome, " :: Text) <> name
     app <- getYesod
-    let writeChan = chatChan app
+    let games = runningGames app
     return ()
     {-
     readChan <- atomically $ do
