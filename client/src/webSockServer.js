@@ -1,5 +1,7 @@
 var ws = require("nodejs-websocket")
 
+// toy server for testing elm web-socket connections
+
 var port = 8010
 console.log("running web socket server on port " + port)
 // Scream server example: "hi" -> "HI!!!"

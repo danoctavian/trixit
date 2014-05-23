@@ -9,6 +9,24 @@ import Graphics.Input.Field as Field
 import Signal
 import Dict
 
+{-
+  FRONTEND implementation of a popular card game. can't tell you which cause i didn't think how to 
+  deal with copyright yet :)
+
+  4 main sections:
+    ** MODEL - all data types representing the state in the game
+    ** INPUTS - player inputs (eg. proposed word, chosen card)
+    ** DISPLAY - how to draw the game 
+    ** UPDATE - how to change the state of the game based on player inputs/server data
+
+    main peculiarity:
+      server communication needs to be done with 2 sockets mainly because elm websocket library
+      is not flexible eonugh to let you use the output signal of a websocket to define the input
+      signal of that socket. 
+      another solution: use js hacks 
+      long-term solution: change the library and  switch to one-socket communincation
+-}
+
 -- MODEL
 
 data Stage = Match | Guess | ProposeWord | Idle
@@ -34,14 +52,12 @@ trixitTable = {handCards = [], tableCards = [], players = [],
                stage = Idle, word = ""}
 
 
+-- filled up state used for manual visual debugging
+-- TODO: remove when done with
 forShoTable = {handCards = [makeCard "03" False False, makeCard "01" False False], tableCards = [makeCard "02" False False, makeCard "04" False False], players = [],
                stage = Idle, word = ""} 
 
--- UPDATE
 
-update tableUpdate table = table--{table | word <- "wtf"}
-
--- DISPLAY
 
 -- INPUTS
 
@@ -50,7 +66,6 @@ type CardInput = Input.Input CardID
 
 chosenHandCard : CardInput
 chosenHandCard = Input.input "n/a"
-
 
 chosenTableCard : CardInput
 chosenTableCard = Input.input "n/a"
@@ -75,6 +90,11 @@ cardHeight = 200
 data GameInput =  ChosenHand CardID | ChosenDeck CardID | Word String | StageInput {stage : Stage} | Submit | None
 data InputType = ChosenHandInput | ChosenDeckInput | WordInput
 
+
+--UPDATE
+
+update tableUpdate table = table
+
 inputType : GameInput -> InputType
 inputType input
   = case input of
@@ -91,29 +111,6 @@ getCardID gi
     (ChosenDeck cid) -> cid
 
 -- = let model = foldp upd foo Mouse.position in fooDisplay <~ model ~ (lift (\m -> m.bar) model) ~ (conn (lift show model))
-
-
-displayDecision decision
-  = flow down <| [
-      asText decision
-      , flow right [ 
-        button lightGrey black buttonSize buttonSize stageInputHack.handle (StageInput {stage = Guess}) "GUESS stage"
-      ]
-    ]
-
---main = decisionShower
-
-
-decisionShower
-  = let decision =
-        (foldp processDecision initDecision <| merges
-          [stageInputHack.signal, submitCommand.signal, lift ChosenHand chosenHandCard.signal,
-           lift ChosenDeck chosenTableCard.signal, lift (\w -> Word w.string) wordInput.signal])
-        gameState = foldp update forShoTable (constant forShoTable)
-
-    in (\decision word gameState ->
-        flow down <| [asText "DEBUG", displayDecision decision , asText "ENDDEBUG", display gameState word decision] )
-        <~ decision ~ wordInput.signal ~ gameState
 
 requiredInputs stage
   = case stage of
@@ -175,6 +172,27 @@ displayCard (w, h) inp card
           
                       
     in Input.customButton inp.handle card.cardID pic pic pic
+
+
+displayDecision decision
+  = flow down <| [
+      asText decision
+      , flow right [ 
+        button lightGrey black buttonSize buttonSize stageInputHack.handle (StageInput {stage = Guess}) "GUESS stage"
+      ]
+    ]
+
+decisionShower
+  = let decision =
+        (foldp processDecision initDecision <| merges
+          [stageInputHack.signal, submitCommand.signal, lift ChosenHand chosenHandCard.signal,
+           lift ChosenDeck chosenTableCard.signal, lift (\w -> Word w.string) wordInput.signal])
+        gameState = foldp update forShoTable (constant forShoTable)
+
+    in (\decision word gameState ->
+        flow down <| [asText "DEBUG", displayDecision decision , asText "ENDDEBUG", display gameState word decision] )
+        <~ decision ~ wordInput.signal ~ gameState
+
  -- Utils   
 -- function if
 if' c x y = if c then x else y
@@ -205,68 +223,13 @@ txt p clr string =
     typeface ["Helvetica Neue","Sans-serif"] . Text.color clr <| toText string
 
 
--- FUCKAROUNDS
-
--- FOOs
-
-{-
-sentenceInput : Input.Input Field.Content
-sentenceInput = Input.input Field.noContent
-
-sentenceInput2 : Input.Input Field.Content
-sentenceInput2 = Input.input Field.noContent
-
-submitActions : Input.Input String
-submitActions = Input.input ""
-
-toggle : Input.Input Bool
-toggle = Input.input True
--- end FOOS
 
 
-fooInput = displayFooInput <~ (sampleOn submitActions.signal (combine [sentenceInput.signal, sentenceInput2.signal]))
-                                    ~ sentenceInput.signal ~ sentenceInput2.signal ~ toggle.signal
-
-
-displayFooInput txt sentence sentence2 isVisible
-  = flow down <| [asText <|  map (.string) txt] ++
-    (if isVisible then
-    [
-    Field.field Field.defaultStyle sentenceInput.handle id "write sentence" sentence
-    , Field.field Field.defaultStyle sentenceInput2.handle id "write sentence" sentence2
-    ] else []) ++
-    [button lightGrey black buttonSize buttonSize submitActions.handle "Wtf" "Submit"
-    , button lightGrey black buttonSize buttonSize toggle.handle (not isVisible) "toggle"
-    ]
--}
-stateInput : Input.Input Stage
-stateInput = Input.input Idle
-
-numbers : Input.Input Int
-numbers = Input.input 42
-{-}
-
-
--}
---multCrap = let s = stateInput in multipleCrap <~ Keyboard.arrows ~ Mouse.position ~  (conn (lift show (dropRepeats s.signal)))
-
-{-
-foo = {bar = (0, 0)}
-mousePlay = let model = foldp upd foo Mouse.position in fooDisplay <~ model ~ (lift (\m -> m.bar) model) ~ (conn (lift show model))
-fooDisplay m t connection = flow right [asText m , asText t, asText connection]
-upd mouse f = {f | bar <- mouse}
--}
+-- small websocket two -way communication snippet
+-- TODO: replace with real main function
 conn = WebSocket.connect "ws://localhost:8010"
 echoSocket = asText <~ conn (conn (constant "Hello WebSocket!"))
 
 main = asText <~ (WebSocket.connect "ws://localhost:3000" (constant "whowtf"))
-
-
-data Periferals = M (Int, Int) | K (Int, Int)
-periferals = asText <~  (merges [(lift M Mouse.position), (lift (\e -> K (e.x, e.y)) Keyboard.arrows)])
-
-
-input = let delta = lift (\t -> t/20) (fps 25)
-        in sampleOn delta (lift2 (,) delta Keyboard.arrows)
 
 
