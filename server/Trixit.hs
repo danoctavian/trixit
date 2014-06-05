@@ -13,6 +13,14 @@ import GHC.Generics
 import Data.Data
 import Data.Typeable
 
+{-
+BIG TODO: see if this is worth rewriting with lenses, functional references or anything similiar
+for easy data access and modification in a nested data structure
+
+SO collection of pointers for the above
+http://stackoverflow.com/questions/7365425/is-there-a-haskell-idiom-for-updating-a-nested-data-structure
+-}
+
 type CardID = String
 type PlayerID = String
 type Word = String
